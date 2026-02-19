@@ -125,7 +125,6 @@ class PluginManager {
         defaultFontSize: 14
       }
     })
-    view.setBackgroundColor('#00000000')
     return view
   }
 
