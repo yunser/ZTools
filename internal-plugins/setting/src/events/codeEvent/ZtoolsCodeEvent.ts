@@ -112,14 +112,18 @@ export function initZtoolsBaseEventHandler(options: InitBaseEventHandlerOptions 
 
   addZtoolsCodeEventListener('ui.router', (e) => {
     console.log('[code-event] ui.router 收到消息', e)
+    // 将完整的 pluginEnterParams 传递到路由状态（包含所有额外参数如 autoOpenEditor）
+    const routeState: Record<string, any> = {
+      ...e.pluginEnterParams,
+      payload: e.pluginEnterParams.payload,
+      type: e.pluginEnterParams.type
+    }
+
     e.router
       .replace({
         name: e.getParamsKey('router'),
         query: { ...e.params, t: Date.now() },
-        state: {
-          payload: e.pluginEnterParams.payload,
-          type: e.pluginEnterParams.type
-        }
+        state: routeState
       })
       .then(() => {})
     if (height) {

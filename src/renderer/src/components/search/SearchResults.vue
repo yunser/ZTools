@@ -959,6 +959,7 @@ async function handleContextMenuCommand(command: string): Promise<void> {
           cmdType: 'text',
           param: {
             payload: targetCommand,
+            autoOpenEditor: true,
             type: 'text'
           }
         })
