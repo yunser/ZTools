@@ -34,7 +34,7 @@ interface BlockedApp {
 
 interface SuperPanelConfig {
   enabled: boolean
-  mouseButton: 'middle' | 'right' | 'back' | 'forward'
+  mouseButton: 'left' | 'middle' | 'right' | 'back' | 'forward'
   longPressMs: number
   blockedApps: BlockedApp[]
 }

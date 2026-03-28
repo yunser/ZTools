@@ -85,7 +85,7 @@ interface ClipboardFile {
 }
 
 // 鼠标按钮类型
-type MouseButtonType = 'middle' | 'right' | 'back' | 'forward'
+type MouseButtonType = 'left' | 'middle' | 'right' | 'back' | 'forward'
 
 /**
  * 剪贴板监控类
@@ -455,7 +455,7 @@ export class MouseMonitor {
       throw new Error('Mouse monitor is already running')
     }
 
-    const validButtons: MouseButtonType[] = ['middle', 'right', 'back', 'forward']
+    const validButtons: MouseButtonType[] = ['left', 'middle', 'right', 'back', 'forward']
     if (!validButtons.includes(buttonType)) {
       throw new TypeError(`buttonType must be one of: ${validButtons.join(', ')}`)
     }
@@ -466,6 +466,10 @@ export class MouseMonitor {
 
     if (buttonType === 'right' && longPressMs === 0) {
       throw new TypeError("'right' button only supports long press (longPressMs must be > 0)")
+    }
+
+    if (buttonType === 'left' && longPressMs === 0) {
+      throw new TypeError("'left' button only supports long press (longPressMs must be > 0)")
     }
 
     if (typeof callback !== 'function') {

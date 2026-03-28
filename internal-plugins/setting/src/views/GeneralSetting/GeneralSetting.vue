@@ -83,6 +83,7 @@ const devToolsModeOptions = [
 ]
 
 const superPanelMouseButtonOptions = [
+  { label: '长按鼠标左键', value: 'left-long' },
   { label: '按下鼠标中键', value: 'middle' },
   { label: '长按鼠标中键', value: 'middle-long' },
   { label: '长按鼠标右键', value: 'right-long' },
