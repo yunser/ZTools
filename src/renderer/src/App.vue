@@ -768,15 +768,35 @@ onMounted(async () => {
       type: options.type === 'app' ? ('direct' as const) : options.type
     }
 
-    // 如果是插件类型，且没有传递 param.payload，则使用当前搜索框内容
+    // 如果是插件类型，且没有传递 param.payload，则根据当前上下文确定 payload
     if (options.type === 'plugin' && (!options.param || !options.param.payload)) {
-      // 当文本在 pasted-text 状态时，以粘贴文本作为 payload；否则使用搜索框文本
-      const effectivePayload = pastedTextData.value || searchQuery.value
-      console.log('[IPC Launch] 使用当前搜索框内容作为 payload:', effectivePayload)
+      let effectivePayload: any
+      let payloadType = options.cmdType || 'text'
+
+      if (pastedImageData.value) {
+        effectivePayload = pastedImageData.value
+        payloadType = 'img'
+      } else if (pastedFilesData.value && pastedFilesData.value.length > 0) {
+        effectivePayload = pastedFilesData.value.map((file) => ({
+          isFile: !file.isDirectory,
+          isDirectory: file.isDirectory,
+          name: file.name,
+          path: file.path
+        }))
+        payloadType = 'files'
+      } else if (pastedTextData.value) {
+        effectivePayload = pastedTextData.value
+        payloadType = 'text'
+      } else {
+        effectivePayload = searchQuery.value
+        payloadType = 'text'
+      }
+
+      console.log('[IPC Launch] 使用当前上下文作为 payload:', effectivePayload)
       launchOptions.param = {
         ...options.param,
         payload: effectivePayload,
-        type: options.cmdType || 'text',
+        type: payloadType,
         inputState: {
           searchQuery: searchQuery.value,
           pastedImage: pastedImageData.value,
