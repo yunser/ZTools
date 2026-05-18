@@ -160,9 +160,7 @@ class WindowManager {
     }, 15000)
   }
 
-  private hideAfterDeferredMouseUpIfNeeded(): void {
-    if (!this.pendingBlurHideOnMouseUp) return
-
+  private resolveDeferredBlurHideOnMouseUp(): void {
     this.pendingBlurHideOnMouseUp = false
     this.clearPendingBlurHideTimer()
 
@@ -200,8 +198,11 @@ class WindowManager {
       if (!this.isLeftMouseButton(event.button)) return
 
       this.leftMouseDown = false
-      this.hideAfterDeferredMouseUpIfNeeded()
-      this.resolveMouseUpVisibility()
+      if (this.pendingBlurHideOnMouseUp) {
+        this.resolveDeferredBlurHideOnMouseUp()
+      } else {
+        this.resolveMouseUpVisibility()
+      }
     })
 
     globalInputManager.acquire(WINDOW_BLUR_DRAG_INPUT_CONSUMER)
