@@ -722,9 +722,9 @@ class WindowManager {
 
     this.toggleWindow()
 
-    if (willShow) {
+    if (willShow && platform.isWindows) {
       if (this.doubleTapFocusTimer) clearTimeout(this.doubleTapFocusTimer)
-      // 延后一小段时间再聚焦，避开窗口 show 和系统焦点切换尚未稳定的阶段。
+      // Windows 上延后一小段时间再聚焦，避开窗口 show 和系统焦点切换尚未稳定的阶段。
       this.doubleTapFocusTimer = setTimeout(() => {
         this.refocusSearchAfterDoubleTap()
         this.doubleTapFocusTimer = null
@@ -755,15 +755,14 @@ class WindowManager {
   }
 
   private refocusSearchAfterDoubleTap(): void {
+    if (!platform.isWindows) return
     if (!this.mainWindow?.isVisible()) return
 
     app.focus({ steal: true })
     this.mainWindow.show()
     this.mainWindow.moveTop()
-    if (platform.isWindows) {
-      // Electron 的 isFocused 有时已经为 true，但 Windows 前台键盘目标仍未切到本应用；这里用原生激活补齐。
-      NativeWindowManager.activateWindow(process.pid)
-    }
+    // Electron 的 isFocused 有时已经为 true，但 Windows 前台键盘目标仍未切到本应用；这里用原生激活补齐。
+    NativeWindowManager.activateWindow(process.pid)
     this.mainWindow.focus()
     this.mainWindow.webContents.focus()
     this.mainWindow.webContents.send('focus-search', this.previousActiveWindow || null)
