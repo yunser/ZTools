@@ -14,8 +14,8 @@ import api from '../index'
 import databaseAPI from '../shared/database'
 
 const GLOBAL_SHORTCUT_COOLDOWN_MS = 180
-const KEY_RELEASE_WAIT_TIMEOUT_MS = 1000
-const CLIPBOARD_COPY_WAIT_TIMEOUT_MS = 1500
+const KEY_RELEASE_WAIT_TIMEOUT_MS = 180
+const CLIPBOARD_COPY_WAIT_TIMEOUT_MS = 180
 
 /**
  * 快捷键触发时携带的文件输入
