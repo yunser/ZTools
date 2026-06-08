@@ -327,6 +327,34 @@ async function getAppDisplayInfo(appPath: string): Promise<LocalizedAppMetadata>
   return { name, aliases }
 }
 
+// 递归收集目录下的 .app bundle
+// - 遇到 .app 目录：收集，不再深入（避免把 *.app 内部的 helper 子 app 扫进来）
+// - 遇到普通目录且 depth > 0：下钻一层
+//   这样可覆盖浏览器 PWA（~/Applications/Chrome Apps.localized/*.app、
+//   Edge Apps.localized 等）以及 /Applications/Microsoft Office/*.app 这类嵌套应用
+async function collectAppBundles(dir: string, depth: number, out: string[]): Promise<void> {
+  let entries: fsSync.Dirent[]
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true })
+  } catch {
+    return
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const fullPath = path.join(dir, entry.name)
+
+    if (entry.name.endsWith('.app')) {
+      out.push(fullPath)
+      continue
+    }
+
+    if (depth > 0) {
+      await collectAppBundles(fullPath, depth - 1, out)
+    }
+  }
+}
+
 export async function scanApplications(): Promise<Command[]> {
   try {
     console.time('[Scanner] 扫描应用')
@@ -339,21 +367,16 @@ export async function scanApplications(): Promise<Command[]> {
       `${process.env.HOME}/Applications`
     ]
 
-    const allAppPaths: string[] = []
+    const collected: string[] = []
 
-    // 快速读取所有应用路径
+    // 读取所有应用路径（下钻一层以覆盖浏览器 PWA 等嵌套在子目录中的 .app）
     for (const searchPath of searchPaths) {
-      try {
-        const entries = await fs.readdir(searchPath, { withFileTypes: true })
-        const appDirs = entries
-          .filter((entry) => entry.isDirectory() && entry.name.endsWith('.app'))
-          .map((entry) => path.join(searchPath, entry.name))
-
-        allAppPaths.push(...appDirs)
-      } catch {
-        continue
-      }
+      await collectAppBundles(searchPath, 1, collected)
     }
+
+    // 不同搜索路径可能扫到同一 .app（如 /System/Applications/Utilities 既被显式列出
+    // 又会从 /System/Applications 下钻命中），按路径去重
+    const allAppPaths = [...new Set(collected)]
 
     console.log(`[Scanner] 找到 ${allAppPaths.length} 个应用`)
 
