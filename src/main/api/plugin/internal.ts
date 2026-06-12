@@ -1,4 +1,4 @@
-import { app, IpcMainInvokeEvent, ipcMain } from 'electron'
+import { app, dialog, IpcMainInvokeEvent, ipcMain } from 'electron'
 import type { PluginManager } from '../../managers/pluginManager'
 import windowManager from '../../managers/windowManager.js'
 import logCollector from '../../core/logCollector.js'
@@ -13,6 +13,7 @@ import aiModelsAPI from '../renderer/aiModels.js'
 import commandsAPI from '../renderer/commands.js'
 import pluginsAPI from '../renderer/plugins.js'
 import type { DeletePluginOptions } from '../renderer/plugins'
+import { promises as fs } from 'fs'
 import settingsAPI from '../renderer/settings.js'
 import systemAPI from '../renderer/system.js'
 import windowAPI from '../renderer/window.js'
@@ -448,6 +449,41 @@ export class InternalPluginAPI {
       }
       return await databaseAPI.getPluginDoc(pluginName, docKey)
     })
+
+    ipcMain.handle(
+      'internal:export-plugin-doc',
+      async (event, pluginName: string, docKey: string) => {
+        if (!requireInternalPlugin(this.pluginManager, event)) {
+          throw new PermissionDeniedError('internal:export-plugin-doc')
+        }
+
+        const result = await databaseAPI.getPluginDoc(pluginName, docKey)
+        if (!result.success) return result
+
+        const targetWindow =
+          detachedWindowManager.getWindowByPluginWebContents(event.sender.id) || this.mainWindow
+        if (!targetWindow) {
+          return { success: false, error: '未找到窗口' }
+        }
+
+        const safePluginName = pluginName.replace(/[\\/:*?"<>|]/g, '_')
+        const safeDocKey = docKey.replace(/[\\/:*?"<>|]/g, '_')
+        const saveResult = await windowManager.withBlurHideSuppressed(() =>
+          dialog.showSaveDialog(targetWindow, {
+            title: '导出文档',
+            defaultPath: `${safePluginName}-${safeDocKey}.json`,
+            filters: [{ name: 'JSON', extensions: ['json'] }]
+          })
+        )
+
+        if (saveResult.canceled || !saveResult.filePath) {
+          return { success: false, canceled: true }
+        }
+
+        await fs.writeFile(saveResult.filePath, JSON.stringify(result.data, null, 2), 'utf-8')
+        return { success: true, exportPath: saveResult.filePath }
+      }
+    )
 
     ipcMain.handle('internal:get-plugin-data-stats', async (event) => {
       if (!requireInternalPlugin(this.pluginManager, event)) {

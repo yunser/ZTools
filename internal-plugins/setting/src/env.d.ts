@@ -177,6 +177,15 @@ declare global {
           type?: 'document' | 'attachment'
           error?: string
         }>
+        exportPluginDoc: (
+          pluginName: string,
+          key: string
+        ) => Promise<{
+          success: boolean
+          exportPath?: string
+          canceled?: boolean
+          error?: string
+        }>
         getPluginDataStats: () => Promise<{
           success: boolean
           data?: Array<{

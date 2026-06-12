@@ -101,6 +101,26 @@ async function viewPluginDocs(pluginData: PluginData): Promise<void> {
   }
 }
 
+// 导出文档
+async function exportDocContent(docItem: DocItem): Promise<void> {
+  if (!currentPluginData.value) return
+
+  try {
+    const result = await window.ztools.internal.exportPluginDoc(
+      currentPluginData.value.pluginName,
+      docItem.key
+    )
+    if (result.success) {
+      success('文档导出成功')
+    } else if (!result.canceled) {
+      error(`导出失败: ${result.error || '未知错误'}`)
+    }
+  } catch (err) {
+    console.error('导出文档失败:', err)
+    error('导出文档失败')
+  }
+}
+
 // 查看文档内容
 async function viewDocContent(key: string): Promise<void> {
   if (!currentPluginData.value) return
@@ -280,6 +300,13 @@ onUnmounted(() => {
           @click="viewDocContent(docItem.key)"
         >
           <span class="doc-key">{{ docItem.key }}</span>
+          <button
+            class="icon-btn export-doc-btn"
+            title="导出文档"
+            @click.stop="exportDocContent(docItem)"
+          >
+            <div class="i-z-download font-size-16px" />
+          </button>
           <span class="doc-type-badge" :class="`type-${docItem.type}`">
             {{ docItem.type === 'document' ? '文档' : '附件' }}
           </span>
@@ -561,6 +588,17 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.export-doc-btn {
+  margin-left: 12px;
+  color: var(--primary-color);
+  transition: all 0.2s;
+}
+
+.export-doc-btn:hover {
+  background: var(--primary-light-bg);
+  color: var(--primary-color);
 }
 
 .doc-type-badge {
